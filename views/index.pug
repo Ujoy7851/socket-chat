@@ -1,0 +1,17 @@
+doctype
+html
+  head
+    meta(charset='utf-8')
+    title GIF 채팅방
+  body
+    div 개발자 도구에서 console 탭과 network 탭을 확인하세요.
+    script(src='/socket.io/socket.io.js')
+    script.
+      let socket = io.connect('http://localhost:8005', {
+        path: '/socket.io',
+        transports: ['websocket']
+      });
+      socket.on('news', (data) => {
+        console.log(data);
+        socket.emit('reply', '클라이언트에서 서버로 보내는 메세지!');
+      });
