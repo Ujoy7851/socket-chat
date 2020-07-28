@@ -65,6 +65,7 @@ router.get('/room/:id', async (req, res, next) => {
       room,
       title: room.title,
       chats,
+      number: (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) || 1,
       user: req.session.color,
     })
 
@@ -136,6 +137,28 @@ router.post('/room/:id/gif', upload.single('gif'), async (req, res, next) => {
     console.error(error);
     next(error);
   }
-})
+});
+
+router.post('/room/:id/sys', async (req, res, next) => {
+  try {
+    const chat = req.body.type === 'join'
+      ? `${req.session.color}님이 입장하셨습니다.`
+      : `${req.session.color}님이 퇴장하셨습니다.`;
+    await Chat.create({
+      room: req.params.id,
+      user: 'system',
+      chat
+    });
+    req.app.get('io').of('/chat').to(req.params.id).emit(req.body.type, {
+      user: 'system',
+      chat,
+      number: req.app.get('io').of('/chat').adapter.rooms[req.params.id].length
+    });
+    res.send('ok');
+  } catch(error) {
+    console.error(error);
+    next(error);
+  }
+});
 
 module.exports = router;
