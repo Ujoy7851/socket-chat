@@ -16,6 +16,13 @@
   padding: 2px 5px;
   max-width: 300px;
 }
+.dm, .ban {
+  border-radius: 5px;
+  margin-left: 5px;
+  font-size: 12px;
+  color: white;
+  border: 1px solid
+}
 #exit-btn { position: absolute; top: 20px; right: 20px; }
 #chat-list { height: 500px; overflow: auto; padding: 5px; }
 #chat-form { text-align: right; }

@@ -97,7 +97,12 @@ router.post('/room/:id/chat', async (req, res, next) => {
       chat: req.body.chat
     });
     res.send('ok');
-    req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+    req.app.get('io').of('/chat').to(req.params.id).emit('chat', {
+      room: req.params.id,
+      user: req.session.color,
+      chat: req.body.chat,
+      socket: req.body.sid
+    });
   } catch(error) {
     console.error(error);
     next(error);
@@ -132,7 +137,13 @@ router.post('/room/:id/gif', upload.single('gif'), async (req, res, next) => {
       gif: req.file.filename
     });
     res.send('ok');
-    req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+    // req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+    req.app.get('io').of('/chat').to(req.params.id).emit('chat', {
+      room: req.params.id,
+      user: req.session.color,
+      gif: req.file.filename,
+      socket: req.body.sid
+    });
   } catch(error) {
     console.error(error);
     next(error);

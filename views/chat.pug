@@ -5,7 +5,10 @@ block content
   a#exit-btn(href='/') 방 나가기
   #number
     |참여자 수
-    #number-count=number
+    #number-count= number
+  #owner
+    | 방장
+    span#room-owner(style='color:' + room.owner)= room.owner
   fieldset
     legend 채팅 내용
     #chat-list
@@ -45,7 +48,6 @@ block content
       div.textContent = data.chat;
       div.appendChild(chat);
       document.querySelector('#chat-list').appendChild(div);
-      console.log('join');
     });
     socket.on('exit', function (data) {
       document.querySelector('#number-count').textContent = data.number;
@@ -55,7 +57,6 @@ block content
       div.textContent = data.chat;
       div.appendChild(chat);
       document.querySelector('#chat-list').appendChild(div);
-      console.log('exit');
     });
     socket.on('chat', function(data) {
       var div = document.createElement('div');
@@ -66,6 +67,26 @@ block content
       }
       var name = document.createElement('div');
       name.textContent = data.user;
+      name.className = 'chat-user';
+      if(data.user !== '#{user}') {
+        var dmBtn = document.createElement('button');
+        dmBtn.textContent = '귓속말';
+        dmBtn.className = 'dm';
+        dmBtn.dataset.socket = data.socket;
+        dmBtn.addEventListener('click', sendDM);
+        dmBtn.style.backgroundColor = data.user;
+        name.appendChild(dmBtn);
+      }
+      if('#{user}' === '#{room.owner}' && data.user !== '#{user}') {
+        var banBtn = document.createElement('button');
+        banBtn.textContent = '강퇴';
+        banBtn.className = 'ban';
+        banBtn.dataset.socket = data.socket;
+        banBtn.dataset.name = data.user;
+        banBtn.addEventListener('click', ban);
+        banBtn.style.backgroundColor = data.user;
+        name.appendChild(banBtn);
+      }
       div.appendChild(name);
       if(data.chat) {
         var chat = document.createElement('div');
@@ -92,7 +113,7 @@ block content
         };
         xhr.open('POST', '/room/#{room._id}/chat');
         xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify({ chat: this.chat.value }));
+        xhr.send(JSON.stringify({ chat: this.chat.value, sid: socket.id }));
       }
     });
     document.querySelector('#gif').addEventListener('change', function(e) {
@@ -108,4 +129,34 @@ block content
       };
       xhr.open('POST', '/room/#{room._id}/gif');
       xhr.send(formData);
-    })
+    });
+    var sendDM = function(e) {
+      var id = e.target.dataset.socket;
+      var prompt = window.prompt('귓속말을 입력하세요.');
+      if(prompt) {
+        socket.emit('dm', { target: id, msg: prompt, from: '#{user}' });
+      }
+    };
+    document.querySelectorAll('.dm').forEach(function(el) {
+      el.addEventListener('click', sendDM);
+    });
+    socket.on('dm', (data) => {
+      alert(data.from + '님이 귓속말을 보냈습니다.: ' + data.msg);
+    });
+    var ban = function(e) {
+      var id = e.target.dataset.socket;
+      var name = e.target.dataset.name;
+      var owner = document.getElementById('room-owner').textContent;
+      if('#{user}' === owner && name !== owner) {
+        if(confirm(`${name}를 강퇴하시겠습니까?`)) {
+          socket.emit('ban', { id });
+        }
+      }
+    };
+    document.querySelectorAll('.ban').forEach(function(el) {
+      el.addEventListener('click', ban);
+    });
+    socket.on('ban', (data) => {
+      alert('강퇴되었습니다.');
+      location.href = '/';
+    });
